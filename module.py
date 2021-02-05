@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+LARGE_NUMBER = 100_000_000
+
+
 class Embedding(nn.Module):
     def __init__(self, in_dim, out_dim, batch_norm=True):
         """ Module for embedding the input features.
@@ -148,3 +151,47 @@ class Encoder(nn.module):
             input_seq = self.multihead_attention(input_seq)
             input_seq = self.ff(input_seq)
         return input_seq
+
+
+class Pointer(nn.Module):
+    def __init__(self, query_dim=256, n_hidden=512):
+        """ Pointer network.
+
+        Args:
+            query_dim (int, optional): Dimension of the query. Defaults to 256.
+            n_hidden (int, optional): Hidden size. Defaults to 512.
+        """
+        super().__init__()
+        self.w_q = nn.Linear(query_dim, n_hidden, bias=False)
+        self.v = nn.Parameter(nn.init.xavier_uniform_(torch.empty(n_hidden)))
+
+    def forward(self, encoded_ref, query, mask, c=10, temp=1):
+        encoded_query = self.w_q(query).unsqueeze(1)
+        scores = torch.sum(self.v * F.tanh(encoded_ref + encoded_query), dim=-1)
+        scores = c * F.tanh(scores / temp)
+        masked_scores = torch.clip(scores - LARGE_NUMBER * mask, -LARGE_NUMBER, LARGE_NUMBER)
+        return masked_scores
+
+
+class FullGlimpse(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        """ Full Glimpse for the Critic.
+
+        Args:
+            in_dim (int): Input dimension.
+            out_dim (int): Output dimension.
+        """
+        super().__init__()
+        self.conv = nn.Conv1d(in_dim, out_dim, 1)
+        self.v = nn.Parameter(nn.init.xavier_uniform_(torch.empty(out_dim)))
+
+    def forward(self, ref):
+        # Attention
+        encoded_ref = self.conv(ref)
+        scores = torch.sum(self.v * F.tanh(encoded_ref), dim=-1)
+        attention = F.softmax(scores)
+
+        # Glimpse : Linear combination of reference vectors (define new query vector)
+        glimpse = torch.matmul(ref, attention.unsqueeze(-1))
+        glimpse = torch.sum(glimpse, dim=1)
+        return glimpse
