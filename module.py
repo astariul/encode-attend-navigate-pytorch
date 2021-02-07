@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.distributions as distrib
 
 
 LARGE_NUMBER = 100_000_000
@@ -174,7 +175,7 @@ class Pointer(nn.Module):
 
 
 class FullGlimpse(nn.Module):
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim=128, out_dim=256):
         """ Full Glimpse for the Critic.
 
         Args:
@@ -195,3 +196,73 @@ class FullGlimpse(nn.Module):
         glimpse = torch.matmul(ref, attention.unsqueeze(-1))
         glimpse = torch.sum(glimpse, dim=1)
         return glimpse
+
+
+class Decoder(nn.Module):
+    def __init__(self, n_hidden=512, dec_hidden=256, query_dim=360, n_history=3):
+        """ Decoder with a Pointer network and a memory of size `n_history`. 
+
+        Args:
+            n_hidden (int, optional): Encoder hidden size. Defaults to 512.
+            dec_hidden (int, optional): Decoder hidden size. Defaults to 256.
+            query_dim (int, optional): Dimension of the query. Defaults to 360.
+            n_history (int, optional): Size of history. Defaults to 3.
+        """
+        self.conv = nn.Conv1d(n_hidden, dec_hidden, 1)
+        self.n_history = n_history
+        self.queriers = [nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)]
+        self.pointer = Pointer(query_dim, n_hidden)
+
+    def forward(self, inputs, c=10, temp=1):
+        batch_size, seq_len, hidden = inputs.size()
+
+        idx_list, log_probs, entropies = [], [], [] # Tours index, log_probs, entropies
+        mask = torch.zeros([batch_size, seq_len])   # Mask for actions
+
+        encoded_input = self.conv(inputs)
+
+        prev_actions = [torch.zeros([batch_size, hidden]) for _ in self.n_history]
+
+        for _ in range(seq_len):
+            query = F.ReLu(torch.sum([querier(prev_action) for prev_action, querier in zip(prev_actions, self.queriers)]))
+            logits = self.pointer(encoded_input, query, mask, c=c, temp=temp)
+
+            probs = distrib.Categorical(logits)
+            idx = probs.sample()
+
+            idx_list.append(idx)    # Tour index
+            log_probs.append(probs.log_prob(idx))
+            entropies.append(probs.entropy())
+            mask[idx] = 1
+
+            action_rep = inputs[idx]
+            prev_actions.pop(0)
+            prev_actions.append(action_rep)
+
+        idx_list.append(idx_list[0])    # Return to start
+        tour = torch.stack(idx_list, dim=1)  # Permutations
+        log_probs = torch.sum(log_probs)  # Corresponding log-probabilities for backpropagation (Reinforce)
+        entropies = torch.sum(entropies)
+
+        return tour, log_probs, entropies
+
+
+class Critic(nn.Module):
+    def __init__(self, input_embed=128, dec_hidden=256, crit_hidden=256):
+        """ Critic module, estimating the minimum length of the tour from the
+        encoded inputs.
+
+        Args:
+            input_embed (int, optional): Size of the encoded input. Defaults to 128.
+            dec_hidden (int, optional): Decoder hidden size. Defaults to 256.
+            crit_hidden (int, optional): Critic hidden size. Defaults to 256.
+        """
+        self.glimpse = FullGlimpse(input_embed, dec_hidden)
+        self.hidden = nn.Linear(dec_hidden, crit_hidden)
+        self.output = nn.Linear(crit_hidden, 1)
+    
+    def forward(self, inputs):
+        frame = self.glimpse(inputs)
+        hidden_out = F.ReLu(self.hidden(frame))
+        preds = self.output(hidden_out).squeeze()
+        return preds
