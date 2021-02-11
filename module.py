@@ -18,14 +18,14 @@ class Embedding(nn.Module):
                 not. Defaults to True.
         """
         super().__init__()
-        self.conv = nn.Conv1d(in_dim, out_dim, 1)
-        self.batch_norm = nn.BatchNorm1d(out_dim) if batch_norm else nn.Identity()
+        self.conv = nn.Conv1d(in_dim, out_dim, 1, bias=False)
+        self.batch_norm = nn.BatchNorm1d(out_dim, eps=0.001, momentum=0.01) if batch_norm else nn.Identity()
+        # (Use TF default parameter, for consistency with original code)
 
     def forward(self, x):
         # x : [bs, seq, in_dim]
-        emb_x = self.conv(x)
-        bs, seq, h = emb_x.size()
-        return self.batch_norm(emb_x.view(-1, h)).view(bs, seq, h)
+        emb_x = self.conv(x.transpose(1, 2))
+        return self.batch_norm(emb_x).transpose(1, 2)   # [bs, seq, out_dim]
 
 
 class MultiHeadAttention(nn.Module):
