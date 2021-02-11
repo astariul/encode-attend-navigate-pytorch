@@ -19,13 +19,17 @@ class Embedding(nn.Module):
         """
         super().__init__()
         self.conv = nn.Conv1d(in_dim, out_dim, 1, bias=False)
-        self.batch_norm = nn.BatchNorm1d(out_dim, eps=0.001, momentum=0.01) if batch_norm else nn.Identity()
+        self.batch_norm = (
+            nn.BatchNorm1d(out_dim, eps=0.001, momentum=0.01)
+            if batch_norm
+            else nn.Identity()
+        )
         # (Use TF default parameter, for consistency with original code)
 
     def forward(self, x):
         # x : [bs, seq, in_dim]
         emb_x = self.conv(x.transpose(1, 2))
-        return self.batch_norm(emb_x).transpose(1, 2)   # [bs, seq, out_dim]
+        return self.batch_norm(emb_x).transpose(1, 2)  # [bs, seq, out_dim]
 
 
 class MultiHeadAttention(nn.Module):
@@ -44,7 +48,11 @@ class MultiHeadAttention(nn.Module):
         """
         super().__init__()
         if n_hidden % num_heads != 0:
-            raise ValueError("`n_hidden` ({}) should be a multiple of `num_heads` ({})".format(n_hidden, num_heads))
+            raise ValueError(
+                "`n_hidden` ({}) should be a multiple of `num_heads` ({})".format(
+                    n_hidden, num_heads
+                )
+            )
 
         self.q = nn.Linear(n_hidden, n_hidden)
         self.k = nn.Linear(n_hidden, n_hidden)
@@ -132,7 +140,9 @@ class FeedForward(nn.Module):
 
 
 class Encoder(nn.module):
-    def __init__(self, num_layers=3, ff_hidden=2048, n_hidden=512, num_heads=16, p_dropout=0.1):
+    def __init__(
+        self, num_layers=3, ff_hidden=2048, n_hidden=512, num_heads=16, p_dropout=0.1
+    ):
         """ Encoder layer
 
         Args:
@@ -170,7 +180,9 @@ class Pointer(nn.Module):
         encoded_query = self.w_q(query).unsqueeze(1)
         scores = torch.sum(self.v * F.tanh(encoded_ref + encoded_query), dim=-1)
         scores = c * F.tanh(scores / temp)
-        masked_scores = torch.clip(scores - LARGE_NUMBER * mask, -LARGE_NUMBER, LARGE_NUMBER)
+        masked_scores = torch.clip(
+            scores - LARGE_NUMBER * mask, -LARGE_NUMBER, LARGE_NUMBER
+        )
         return masked_scores
 
 
@@ -210,27 +222,36 @@ class Decoder(nn.Module):
         """
         self.conv = nn.Conv1d(n_hidden, dec_hidden, 1)
         self.n_history = n_history
-        self.queriers = [nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)]
+        self.queriers = [
+            nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)
+        ]
         self.pointer = Pointer(query_dim, n_hidden)
 
     def forward(self, inputs, c=10, temp=1):
         batch_size, seq_len, hidden = inputs.size()
 
-        idx_list, log_probs, entropies = [], [], [] # Tours index, log_probs, entropies
-        mask = torch.zeros([batch_size, seq_len])   # Mask for actions
+        idx_list, log_probs, entropies = [], [], []  # Tours index, log_probs, entropies
+        mask = torch.zeros([batch_size, seq_len])  # Mask for actions
 
         encoded_input = self.conv(inputs)
 
         prev_actions = [torch.zeros([batch_size, hidden]) for _ in self.n_history]
 
         for _ in range(seq_len):
-            query = F.ReLu(torch.sum([querier(prev_action) for prev_action, querier in zip(prev_actions, self.queriers)]))
+            query = F.ReLu(
+                torch.sum(
+                    [
+                        querier(prev_action)
+                        for prev_action, querier in zip(prev_actions, self.queriers)
+                    ]
+                )
+            )
             logits = self.pointer(encoded_input, query, mask, c=c, temp=temp)
 
             probs = distrib.Categorical(logits)
             idx = probs.sample()
 
-            idx_list.append(idx)    # Tour index
+            idx_list.append(idx)  # Tour index
             log_probs.append(probs.log_prob(idx))
             entropies.append(probs.entropy())
             mask[idx] = 1
@@ -239,9 +260,11 @@ class Decoder(nn.Module):
             prev_actions.pop(0)
             prev_actions.append(action_rep)
 
-        idx_list.append(idx_list[0])    # Return to start
+        idx_list.append(idx_list[0])  # Return to start
         tour = torch.stack(idx_list, dim=1)  # Permutations
-        log_probs = torch.sum(log_probs)  # Corresponding log-probabilities for backpropagation (Reinforce)
+        log_probs = torch.sum(
+            log_probs
+        )  # Corresponding log-probabilities for backpropagation (Reinforce)
         entropies = torch.sum(entropies)
 
         return tour, log_probs, entropies
@@ -260,7 +283,7 @@ class Critic(nn.Module):
         self.glimpse = FullGlimpse(input_embed, dec_hidden)
         self.hidden = nn.Linear(dec_hidden, crit_hidden)
         self.output = nn.Linear(crit_hidden, 1)
-    
+
     def forward(self, inputs):
         frame = self.glimpse(inputs)
         hidden_out = F.ReLu(self.hidden(frame))
