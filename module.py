@@ -59,12 +59,14 @@ class MultiHeadAttention(nn.Module):
         self.v = nn.Linear(n_hidden, n_hidden)
 
         self.dropout = nn.Dropout(p_dropout)
-        self.batch_norm = nn.BatchNorm1d(n_hidden)
+        self.batch_norm = nn.BatchNorm1d(n_hidden, eps=0.001, momentum=0.01)
+        # (Use TF default parameter, for consistency with original code)
 
         self.num_heads = num_heads
 
     def forward(self, inputs):
         # inputs : [bs, seq, n_hidden]
+        bs, _, n_hidden = inputs.size()
 
         # Linear projections
         q = F.relu(self.q(inputs))
@@ -72,9 +74,9 @@ class MultiHeadAttention(nn.Module):
         v = F.relu(self.v(inputs))
 
         # Split and concat
-        q_ = torch.cat(torch.split(q, [1, 1, self.num_heads]))
-        k_ = torch.cat(torch.split(k, [1, 1, self.num_heads]))
-        v_ = torch.cat(torch.split(v, [1, 1, self.num_heads]))
+        q_ = torch.cat(torch.split(q, n_hidden // self.num_heads, dim=2))
+        k_ = torch.cat(torch.split(k, n_hidden // self.num_heads, dim=2))
+        v_ = torch.cat(torch.split(v, n_hidden // self.num_heads, dim=2))
 
         # Multiplication
         outputs = torch.matmul(q_, torch.transpose(k_, 2, 1))
@@ -83,7 +85,7 @@ class MultiHeadAttention(nn.Module):
         outputs = outputs / (k_.size(-1) ** 0.5)
 
         # Activation
-        outputs = F.softmax(outputs)
+        outputs = F.softmax(outputs, dim=-1)
 
         # Dropout
         outputs = self.dropout(outputs)
@@ -92,14 +94,13 @@ class MultiHeadAttention(nn.Module):
         outputs = torch.matmul(outputs, v_)
 
         # Restore shape
-        v_ = torch.cat(torch.split(outputs, [self.num_heads, 1, 1]), dim=2)
+        outputs = torch.cat(torch.split(outputs, bs), dim=2)
 
         # Residual connection
         outputs += inputs
 
         # Normalize
-        bs, seq, h = outputs.size()
-        outputs = self.batch_norm(outputs.view(-1, h)).view(bs, seq, h)
+        outputs = self.batch_norm(outputs.transpose(1, 2)).transpose(1, 2)
 
         return outputs
 
