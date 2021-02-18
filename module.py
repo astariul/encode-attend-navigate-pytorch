@@ -119,10 +119,12 @@ class FeedForward(nn.Module):
         for in_size, out_size in zip(layers_size[:-1], layers_size[1:]):
             self.layers.append(nn.Conv1d(in_size, out_size, 1))
 
-        self.batch_norm = nn.BatchNorm1d(layers_size[-1])
+        self.batch_norm = nn.BatchNorm1d(layers_size[-1], eps=0.001, momentum=0.01)
+        # (Use TF default parameter, for consistency with original code)
 
     def forward(self, inputs):
         # inputs : [bs, seq, n_hidden]
+        inputs = inputs.transpose(1, 2)
         outputs = inputs
         for i, layer in enumerate(self.layers):
             outputs = layer(outputs)
@@ -134,8 +136,7 @@ class FeedForward(nn.Module):
         outputs += inputs
 
         # Normalize
-        bs, seq, h = outputs.size()
-        outputs = self.batch_norm(outputs.view(-1, h)).view(bs, seq, h)
+        outputs = self.batch_norm(outputs).tranpose(1, 2)
 
         return outputs
 
