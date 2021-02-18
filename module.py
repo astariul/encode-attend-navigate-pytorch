@@ -18,18 +18,17 @@ class Embedding(nn.Module):
                 not. Defaults to True.
         """
         super().__init__()
-        self.conv = nn.Conv1d(in_dim, out_dim, 1, bias=False)
+        self.dense = nn.Linear(in_dim, out_dim, bias=False)
         self.batch_norm = (
             nn.BatchNorm1d(out_dim, eps=0.001, momentum=0.01)
             if batch_norm
             else nn.Identity()
-        )
-        # (Use TF default parameter, for consistency with original code)
+        )   # (Use TF default parameter, for consistency with original code)
 
     def forward(self, x):
         # x : [bs, seq, in_dim]
-        emb_x = self.conv(x.transpose(1, 2))
-        return self.batch_norm(emb_x).transpose(1, 2)  # [bs, seq, out_dim]
+        emb_x = self.dense(x)   # [bs, out_dim, seq]
+        return self.batch_norm(emb_x.transpose(1, 2)).transpose(1, 2)
 
 
 class MultiHeadAttention(nn.Module):
@@ -117,14 +116,13 @@ class FeedForward(nn.Module):
 
         self.layers = []
         for in_size, out_size in zip(layers_size[:-1], layers_size[1:]):
-            self.layers.append(nn.Conv1d(in_size, out_size, 1))
+            self.layers.append(nn.Linear(in_size, out_size))
 
         self.batch_norm = nn.BatchNorm1d(layers_size[-1], eps=0.001, momentum=0.01)
         # (Use TF default parameter, for consistency with original code)
 
     def forward(self, inputs):
         # inputs : [bs, seq, n_hidden]
-        inputs = inputs.transpose(1, 2)
         outputs = inputs
         for i, layer in enumerate(self.layers):
             outputs = layer(outputs)
@@ -136,7 +134,7 @@ class FeedForward(nn.Module):
         outputs += inputs
 
         # Normalize
-        outputs = self.batch_norm(outputs).tranpose(1, 2)
+        outputs = self.batch_norm(outputs.tranpose(1, 2)).tranpose(1, 2)
 
         return outputs
 
