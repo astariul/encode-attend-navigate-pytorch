@@ -153,14 +153,12 @@ class Encoder(nn.module):
             p_dropout (float, optional): Dropout rate. Defaults to 0.1.
         """
         super().__init__()
-        self.num_layers = num_layers
-        self.multihead_attention = MultiHeadAttention(n_hidden, num_heads, p_dropout)
-        self.ff = FeedForward(layers_size=[n_hidden, ff_hidden, n_hidden])
+        self.multihead_attention = [MultiHeadAttention(n_hidden, num_heads, p_dropout) for _ in range(num_layers)]
+        self.ff = [FeedForward(layers_size=[n_hidden, ff_hidden, n_hidden]) for _ in range(num_layers)]
 
     def forward(self, input_seq):
-        for _ in range(self.num_layers):
-            input_seq = self.multihead_attention(input_seq)
-            input_seq = self.ff(input_seq)
+        for att, ff in zip(self.multihead_attention, self.ff):
+            input_seq = ff(att(input_seq))
         return input_seq
 
 
