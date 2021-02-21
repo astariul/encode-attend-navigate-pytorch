@@ -193,17 +193,17 @@ class FullGlimpse(nn.Module):
             out_dim (int): Output dimension.
         """
         super().__init__()
-        self.conv = nn.Conv1d(in_dim, out_dim, 1)
-        self.v = nn.Parameter(nn.init.xavier_uniform_(torch.empty(out_dim)))
+        self.dense = nn.Linear(in_dim, out_dim, bias=False)
+        self.v = nn.Parameter(torch.Tensor(out_dim))
 
     def forward(self, ref):
         # Attention
-        encoded_ref = self.conv(ref)
+        encoded_ref = self.dense(ref)
         scores = torch.sum(self.v * F.tanh(encoded_ref), dim=-1)
         attention = F.softmax(scores)
 
         # Glimpse : Linear combination of reference vectors (define new query vector)
-        glimpse = torch.matmul(ref, attention.unsqueeze(-1))
+        glimpse = ref * attention.unsqueeze(-1)
         glimpse = torch.sum(glimpse, dim=1)
         return glimpse
 
