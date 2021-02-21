@@ -172,7 +172,7 @@ class Pointer(nn.Module):
         """
         super().__init__()
         self.w_q = nn.Linear(query_dim, n_hidden, bias=False)
-        self.v = nn.Parameter(nn.init.xavier_uniform_(torch.empty(n_hidden)))
+        self.v = nn.Parameter(torch.Tensor(n_hidden))
 
     def forward(self, encoded_ref, query, mask, c=10, temp=1):
         encoded_query = self.w_q(query).unsqueeze(1)
