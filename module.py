@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -173,6 +175,12 @@ class Pointer(nn.Module):
         super().__init__()
         self.w_q = nn.Linear(query_dim, n_hidden, bias=False)
         self.v = nn.Parameter(torch.Tensor(n_hidden))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.w_q.weight)
+        bound = 1 / math.sqrt(fan_in)
+        nn.init.uniform_(self.v, -bound, bound)    # Similar to a bias of Linear layer
 
     def forward(self, encoded_ref, query, mask, c=10, temp=1):
         encoded_query = self.w_q(query).unsqueeze(1)
@@ -195,6 +203,12 @@ class FullGlimpse(nn.Module):
         super().__init__()
         self.dense = nn.Linear(in_dim, out_dim, bias=False)
         self.v = nn.Parameter(torch.Tensor(out_dim))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.dense.weight)
+        bound = 1 / math.sqrt(fan_in)
+        nn.init.uniform_(self.v, -bound, bound)    # Similar to a bias of Linear layer
 
     def forward(self, ref):
         # Attention
