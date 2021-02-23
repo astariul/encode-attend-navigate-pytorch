@@ -232,7 +232,8 @@ class Decoder(nn.Module):
             query_dim (int, optional): Dimension of the query. Defaults to 360.
             n_history (int, optional): Size of history. Defaults to 3.
         """
-        self.conv = nn.Conv1d(n_hidden, dec_hidden, 1)
+        super().__init__()
+        self.dense = nn.Linear(n_hidden, n_hidden, bias=False)
         self.n_history = n_history
         self.queriers = [
             nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)
@@ -245,39 +246,37 @@ class Decoder(nn.Module):
         idx_list, log_probs, entropies = [], [], []  # Tours index, log_probs, entropies
         mask = torch.zeros([batch_size, seq_len])  # Mask for actions
 
-        encoded_input = self.conv(inputs)
+        encoded_input = self.dense(inputs)
 
-        prev_actions = [torch.zeros([batch_size, hidden]) for _ in self.n_history]
+        prev_actions = [torch.zeros([batch_size, hidden]) for _ in range(self.n_history)]
 
         for _ in range(seq_len):
-            query = F.ReLu(
-                torch.sum(
+            query = F.relu(
+                torch.stack(
                     [
                         querier(prev_action)
                         for prev_action, querier in zip(prev_actions, self.queriers)
                     ]
-                )
+                ).sum(dim=0)
             )
             logits = self.pointer(encoded_input, query, mask, c=c, temp=temp)
 
-            probs = distrib.Categorical(logits)
+            probs = distrib.Categorical(logits=logits)
             idx = probs.sample()
 
             idx_list.append(idx)  # Tour index
             log_probs.append(probs.log_prob(idx))
             entropies.append(probs.entropy())
-            mask[idx] = 1
+            mask = mask + torch.zeros(batch_size, seq_len).scatter_(1, idx.unsqueeze(1), 1)
 
-            action_rep = inputs[idx]
+            action_rep = inputs[torch.arange(batch_size), idx]
             prev_actions.pop(0)
             prev_actions.append(action_rep)
 
         idx_list.append(idx_list[0])  # Return to start
         tour = torch.stack(idx_list, dim=1)  # Permutations
-        log_probs = torch.sum(
-            log_probs
-        )  # Corresponding log-probabilities for backpropagation (Reinforce)
-        entropies = torch.sum(entropies)
+        log_probs = sum(log_probs)  # log-probs for backprop (Reinforce)
+        entropies = sum(entropies)
 
         return tour, log_probs, entropies
 
