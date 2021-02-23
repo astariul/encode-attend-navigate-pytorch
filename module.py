@@ -184,8 +184,8 @@ class Pointer(nn.Module):
 
     def forward(self, encoded_ref, query, mask, c=10, temp=1):
         encoded_query = self.w_q(query).unsqueeze(1)
-        scores = torch.sum(self.v * F.tanh(encoded_ref + encoded_query), dim=-1)
-        scores = c * F.tanh(scores / temp)
+        scores = torch.sum(self.v * torch.tanh(encoded_ref + encoded_query), dim=-1)
+        scores = c * torch.tanh(scores / temp)
         masked_scores = torch.clip(
             scores - LARGE_NUMBER * mask, -LARGE_NUMBER, LARGE_NUMBER
         )
@@ -213,7 +213,7 @@ class FullGlimpse(nn.Module):
     def forward(self, ref):
         # Attention
         encoded_ref = self.dense(ref)
-        scores = torch.sum(self.v * F.tanh(encoded_ref), dim=-1)
+        scores = torch.sum(self.v * torch.tanh(encoded_ref), dim=-1)
         attention = F.softmax(scores)
 
         # Glimpse : Linear combination of reference vectors (define new query vector)
