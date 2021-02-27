@@ -291,12 +291,13 @@ class Critic(nn.Module):
             dec_hidden (int, optional): Decoder hidden size. Defaults to 256.
             crit_hidden (int, optional): Critic hidden size. Defaults to 256.
         """
+        super().__init__()
         self.glimpse = FullGlimpse(input_embed, dec_hidden)
-        self.hidden = nn.Linear(dec_hidden, crit_hidden)
+        self.hidden = nn.Linear(input_embed, crit_hidden)
         self.output = nn.Linear(crit_hidden, 1)
 
     def forward(self, inputs):
         frame = self.glimpse(inputs)
-        hidden_out = F.ReLu(self.hidden(frame))
+        hidden_out = F.relu(self.hidden(frame))
         preds = self.output(hidden_out).squeeze()
         return preds
