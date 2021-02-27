@@ -214,7 +214,7 @@ class FullGlimpse(nn.Module):
         # Attention
         encoded_ref = self.dense(ref)
         scores = torch.sum(self.v * torch.tanh(encoded_ref), dim=-1)
-        attention = F.softmax(scores)
+        attention = F.softmax(scores, dim=-1)
 
         # Glimpse : Linear combination of reference vectors (define new query vector)
         glimpse = ref * attention.unsqueeze(-1)
