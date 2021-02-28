@@ -1,0 +1,16 @@
+# Network architecture
+embed_hidden: 128
+enc_stacks: 3
+ff_hidden: 512
+enc_heads: 16
+query_hidden: 360
+att_hidden: 256
+crit_hidden: 256
+n_history: 3
+p_dropout: 0.1
+
+# Logging
+proj_name: "encode_attend_navigate"
+
+# Training
+steps: 20000

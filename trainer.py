@@ -1,5 +1,4 @@
 import torch
-from omegaconf import OmegaConf as omg
 
 
 def reward(coords, tour):
@@ -31,25 +30,18 @@ def reward(coords, tour):
 
 
 class Trainer():
-    def __init__(self):
-        conf = load_conf()
-        # Have to init wandb with this config
+    def __init__(self, conf, agent):
+        """Trainer class, taking care of training the agent.
 
+        Args:
+            conf (OmegaConf.DictConf): Configuration.
+            agent (torch.nn.Module): Agent network to train.
+        """
+        self.conf = conf
+        self.agent = agent
 
-def load_conf():
-    """Quick method to load configuration (using OmegaConf). By default,
-    configuration is loaded from the default config file (config.yaml).
-    Another config file can be specific through command line.
-    Also, configuration can be over-written by command line.
+    def train_step(self, data):
+        pass
 
-    Returns:
-        OmegaConf.DictConfig: OmegaConf object representing the configuration.
-    """
-    default_conf = omg.create({"config" : "config.yaml"})
-    cli_conf = omg.from_cli()
-
-    yaml_file = omg.merge(default_conf, cli_conf).config
-
-    yaml_conf = omg.load(yaml_file)
-
-    return omg.merge(default_conf, yaml_conf, cli_conf)
+    def run(self):
+        pass
