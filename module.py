@@ -282,17 +282,17 @@ class Decoder(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, n_hidden=128, dec_hidden=256, crit_hidden=256):
+    def __init__(self, n_hidden=128, att_hidden=256, crit_hidden=256):
         """ Critic module, estimating the minimum length of the tour from the
         encoded inputs.
 
         Args:
             n_hidden (int, optional): Size of the encoded input. Defaults to 128.
-            dec_hidden (int, optional): Decoder hidden size. Defaults to 256.
+            att_hidden (int, optional): Attention hidden size. Defaults to 256.
             crit_hidden (int, optional): Critic hidden size. Defaults to 256.
         """
         super().__init__()
-        self.glimpse = FullGlimpse(n_hidden, dec_hidden)
+        self.glimpse = FullGlimpse(n_hidden, att_hidden)
         self.hidden = nn.Linear(n_hidden, crit_hidden)
         self.output = nn.Linear(crit_hidden, 1)
 
