@@ -143,7 +143,7 @@ class FeedForward(nn.Module):
 
 class Encoder(nn.module):
     def __init__(
-        self, num_layers=3, ff_hidden=2048, n_hidden=512, num_heads=16, p_dropout=0.1
+        self, num_layers=3, n_hidden=512, ff_hidden=2048, num_heads=16, p_dropout=0.1
     ):
         """ Encoder layer
 
@@ -223,22 +223,22 @@ class FullGlimpse(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, n_hidden=512, dec_hidden=256, query_dim=360, n_history=3):
+    def __init__(self, n_hidden=512, att_dim=256, query_dim=360, n_history=3):
         """ Decoder with a Pointer network and a memory of size `n_history`. 
 
         Args:
             n_hidden (int, optional): Encoder hidden size. Defaults to 512.
-            dec_hidden (int, optional): Decoder hidden size. Defaults to 256.
+            att_dim (int, optional): Attention dimension size. Defaults to 256.
             query_dim (int, optional): Dimension of the query. Defaults to 360.
             n_history (int, optional): Size of history. Defaults to 3.
         """
         super().__init__()
-        self.dense = nn.Linear(n_hidden, n_hidden, bias=False)
+        self.dense = nn.Linear(n_hidden, att_dim, bias=False)
         self.n_history = n_history
         self.queriers = [
             nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)
         ]
-        self.pointer = Pointer(query_dim, n_hidden)
+        self.pointer = Pointer(query_dim, att_dim)
 
     def forward(self, inputs, c=10, temp=1):
         batch_size, seq_len, hidden = inputs.size()
@@ -282,18 +282,18 @@ class Decoder(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, input_embed=128, dec_hidden=256, crit_hidden=256):
+    def __init__(self, n_hidden=128, dec_hidden=256, crit_hidden=256):
         """ Critic module, estimating the minimum length of the tour from the
         encoded inputs.
 
         Args:
-            input_embed (int, optional): Size of the encoded input. Defaults to 128.
+            n_hidden (int, optional): Size of the encoded input. Defaults to 128.
             dec_hidden (int, optional): Decoder hidden size. Defaults to 256.
             crit_hidden (int, optional): Critic hidden size. Defaults to 256.
         """
         super().__init__()
-        self.glimpse = FullGlimpse(input_embed, dec_hidden)
-        self.hidden = nn.Linear(input_embed, crit_hidden)
+        self.glimpse = FullGlimpse(n_hidden, dec_hidden)
+        self.hidden = nn.Linear(n_hidden, crit_hidden)
         self.output = nn.Linear(crit_hidden, 1)
 
     def forward(self, inputs):
