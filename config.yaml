@@ -14,3 +14,15 @@ proj_name: "encode_attend_navigate"
 
 # Training
 steps: 20000
+log_interval: 200
+batch_size: 256
+max_len: 50
+dimension: 2
+model_path: "model.pt"
+test: True
+test_steps: 10
+
+# Optimizer
+lr: 0.001
+lr_decay_rate: 0.96
+lr_decay_steps: 5000
