@@ -141,7 +141,7 @@ class FeedForward(nn.Module):
         return outputs
 
 
-class Encoder(nn.module):
+class Encoder(nn.Module):
     def __init__(
         self, num_layers=3, n_hidden=512, ff_hidden=2048, num_heads=16, p_dropout=0.1
     ):

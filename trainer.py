@@ -49,7 +49,7 @@ class Trainer():
         self.device = torch.device(self.conf.device)
         self.agent = self.agent.to(self.device)
 
-        self.optim = torch.optim.Adam(params=self.agent.params, lr=self.conf.lr)
+        self.optim = torch.optim.Adam(params=self.agent.parameters(), lr=self.conf.lr)
         gamma = 1 - self.conf.lr_decay_rate / self.conf.lr_decay_steps      # To have same behavior as Tensorflow implementation
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=self.optim, gamma=gamma)
 
