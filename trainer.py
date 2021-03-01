@@ -46,6 +46,9 @@ class Trainer():
         self.agent = agent
         self.dataset = dataset
 
+        self.device = torch.device(self.conf.device)
+        self.agent = self.agent.to(self.device)
+
         self.optim = torch.optim.Adam(params=self.agent.params, lr=self.conf.lr)
         gamma = 1 - self.conf.lr_decay_rate / self.conf.lr_decay_steps      # To have same behavior as Tensorflow implementation
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=self.optim, gamma=gamma)
@@ -81,6 +84,7 @@ class Trainer():
         running_reward, running_losses = 0, [0, 0]
         for step in range(self.conf.steps):
             input_batch = self.dataset.train_batch(self.conf.batch_size, self.conf.max_len, self.conf.dimension)
+            input_batch = input_batch.to(self.device)
 
             reward, losses = self.train_step(input_batch)
 

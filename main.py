@@ -42,13 +42,16 @@ def main():
     torch.save(agent.state_dict(), conf.model_path)
 
     if conf.test:
+        device = torch.device(conf.device)
         # Load trained agent
         agent.load_state_dict(torch.load(conf.model_path))
         agent.eval()
+        agent = agent.to(device)
 
         running_reward = 0
         for _ in range(conf.test_steps):
             input_batch = dataset.test_batch(conf.batch_size, conf.max_len, conf.dimension, shuffle=False)
+            input_batch = input_batch.to(device)
 
             tour, *_ = agent(input_batch)
 
