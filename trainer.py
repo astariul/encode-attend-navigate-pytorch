@@ -1,7 +1,9 @@
+import wandb
 import torch
+import torch.nn.functional as F
 
 
-def reward(coords, tour):
+def reward_fn(coords, tour):
     """Reward function. Compute the total distance for a tour, given the
     coordinates of each city and the tour indexes.
 
@@ -30,18 +32,73 @@ def reward(coords, tour):
 
 
 class Trainer():
-    def __init__(self, conf, agent):
+    def __init__(self, conf, agent, dataset):
         """Trainer class, taking care of training the agent.
 
         Args:
             conf (OmegaConf.DictConf): Configuration.
             agent (torch.nn.Module): Agent network to train.
+            dataset (data.DataGenerator): Data generator.
         """
+        super().__init__()
+
         self.conf = conf
         self.agent = agent
+        self.dataset = dataset
+
+        self.optim = torch.optim.Adam(params=self.agent.params, lr=self.conf.lr)
+        gamma = 1 - self.conf.lr_decay_rate / self.conf.lr_decay_steps      # To have same behavior as Tensorflow implementation
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=self.optim, gamma=gamma)
+
 
     def train_step(self, data):
-        pass
+        self.optim.zero_grad()
+
+        # Forward pass
+        tour, critique, log_probs, _ = self.agent(data)
+
+        # Compute reward
+        reward = reward_fn(data, tour)
+
+        # Compute losses for both actor (reinforce) and critic
+        loss1 = ((reward - critique) * log_probs).mean()
+        loss2 = F.mse_loss(reward, critique)
+
+        # Backward pass
+        loss1.backward()
+        loss2.backward()
+
+        # Optimize
+        self.optim.step()
+
+        # Update LR
+        self.scheduler.step()
+
+        return reward.mean(), [loss1, loss2]
 
     def run(self):
-        pass
+        self.agent.train()
+        running_reward, running_losses = 0, [0, 0]
+        for step in range(self.conf.steps):
+            input_batch = self.dataset.train_batch(self.conf.batch_size, self.conf.max_len, self.conf.dimension)
+
+            reward, losses = self.train_step(input_batch)
+
+            running_reward += reward
+            running_losses[0] += losses[0]
+            running_losses[1] += losses[1]
+
+            if step % self.conf.log_interval == self.conf.log_interval - 1:
+                # Log stuff
+                wandb.log({
+                    'reward': running_reward / self.conf.log_interval,
+                    'actor_loss': running_losses[0] / self.conf.log_interval,
+                    'critic_loss': running_losses[1] / self.conf.log_interval,
+                    'custom_step': step
+                })
+
+                # Reset running reward/loss
+                running_reward, running_losses = 0, [0, 0]
+
+
+            
