@@ -68,8 +68,7 @@ class Trainer():
         loss2 = F.mse_loss(reward, critique)
 
         # Backward pass
-        loss1.backward()
-        loss2.backward()
+        (loss1 + loss2).backward()
 
         # Optimize
         self.optim.step()
