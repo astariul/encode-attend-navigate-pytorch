@@ -84,7 +84,7 @@ class Trainer():
         running_reward, running_losses = 0, [0, 0]
         for step in range(self.conf.steps):
             input_batch = self.dataset.train_batch(self.conf.batch_size, self.conf.max_len, self.conf.dimension)
-            input_batch = input_batch.to(self.device)
+            input_batch = torch.Tensor(input_batch).to(self.device)
 
             reward, losses = self.train_step(input_batch)
 
