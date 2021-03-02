@@ -242,11 +242,11 @@ class Decoder(nn.Module):
         batch_size, seq_len, hidden = inputs.size()
 
         idx_list, log_probs, entropies = [], [], []  # Tours index, log_probs, entropies
-        mask = torch.zeros([batch_size, seq_len])  # Mask for actions
+        mask = torch.zeros([batch_size, seq_len], device=inputs.device)  # Mask for actions
 
         encoded_input = self.dense(inputs)
 
-        prev_actions = [torch.zeros([batch_size, hidden]) for _ in range(self.n_history)]
+        prev_actions = [torch.zeros([batch_size, hidden], device=inputs.device) for _ in range(self.n_history)]
 
         for _ in range(seq_len):
             query = F.relu(
@@ -265,7 +265,7 @@ class Decoder(nn.Module):
             idx_list.append(idx)  # Tour index
             log_probs.append(probs.log_prob(idx))
             entropies.append(probs.entropy())
-            mask = mask + torch.zeros(batch_size, seq_len).scatter_(1, idx.unsqueeze(1), 1)
+            mask = mask + torch.zeros([batch_size, seq_len], device=inputs.device).scatter_(1, idx.unsqueeze(1), 1)
 
             action_rep = inputs[torch.arange(batch_size), idx]
             prev_actions.pop(0)
