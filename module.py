@@ -116,9 +116,7 @@ class FeedForward(nn.Module):
         """
         super().__init__()
 
-        self.layers = []
-        for in_size, out_size in zip(layers_size[:-1], layers_size[1:]):
-            self.layers.append(nn.Linear(in_size, out_size))
+        self.layers = nn.ModuleList([nn.Linear(in_size, out_size) for in_size, out_size in zip(layers_size[:-1], layers_size[1:])])
 
         self.batch_norm = nn.BatchNorm1d(layers_size[-1], eps=0.001, momentum=0.01)
         # (Use TF default parameter, for consistency with original code)
@@ -155,8 +153,8 @@ class Encoder(nn.Module):
             p_dropout (float, optional): Dropout rate. Defaults to 0.1.
         """
         super().__init__()
-        self.multihead_attention = [MultiHeadAttention(n_hidden, num_heads, p_dropout) for _ in range(num_layers)]
-        self.ff = [FeedForward(layers_size=[n_hidden, ff_hidden, n_hidden]) for _ in range(num_layers)]
+        self.multihead_attention = nn.ModuleList([MultiHeadAttention(n_hidden, num_heads, p_dropout) for _ in range(num_layers)])
+        self.ff = nn.ModuleList([FeedForward(layers_size=[n_hidden, ff_hidden, n_hidden]) for _ in range(num_layers)])
 
     def forward(self, input_seq):
         for att, ff in zip(self.multihead_attention, self.ff):
@@ -235,9 +233,9 @@ class Decoder(nn.Module):
         super().__init__()
         self.dense = nn.Linear(n_hidden, att_dim, bias=False)
         self.n_history = n_history
-        self.queriers = [
+        self.queriers = nn.ModuleList([
             nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)
-        ]
+        ])
         self.pointer = Pointer(query_dim, att_dim)
 
     def forward(self, inputs, c=10, temp=1):
