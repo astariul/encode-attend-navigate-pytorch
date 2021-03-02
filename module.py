@@ -134,7 +134,7 @@ class FeedForward(nn.Module):
         outputs += inputs
 
         # Normalize
-        outputs = self.batch_norm(outputs.tranpose(1, 2)).tranpose(1, 2)
+        outputs = self.batch_norm(outputs.transpose(1, 2)).transpose(1, 2)
 
         return outputs
 
