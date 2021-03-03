@@ -91,7 +91,7 @@ class Trainer():
             running_losses[0] += losses[0]
             running_losses[1] += losses[1]
 
-            if step % self.conf.log_interval == self.conf.log_interval - 1:
+            if step % self.conf.log_interval == 0 and step != 0:
                 # Log stuff
                 wandb.log({
                     'reward': running_reward / self.conf.log_interval,
