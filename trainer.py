@@ -97,7 +97,7 @@ class Trainer():
                     'reward': running_reward / self.conf.log_interval,
                     'actor_loss': running_losses[0] / self.conf.log_interval,
                     'critic_loss': running_losses[1] / self.conf.log_interval,
-                    'learnin_rate': self.scheduler.get_last_lr()[0],
+                    'learning_rate': self.scheduler.get_last_lr()[0],
                     'step': step
                 })
 
