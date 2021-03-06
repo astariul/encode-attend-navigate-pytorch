@@ -1,3 +1,5 @@
+import sys
+
 import wandb
 from omegaconf import OmegaConf as omg
 import torch
@@ -17,6 +19,8 @@ def load_conf():
         OmegaConf.DictConfig: OmegaConf object representing the configuration.
     """
     default_conf = omg.create({"config" : "config.yaml"})
+
+    sys.argv = [a.strip("-") for a in sys.argv]
     cli_conf = omg.from_cli()
 
     yaml_file = omg.merge(default_conf, cli_conf).config
