@@ -63,7 +63,7 @@ def main():
 
             # Find best solution
             j = reward.argmin()
-            best_tour = tour[j][:-1]
+            best_tour = tour[j][:-1].tolist()
 
             # Log
             running_reward += reward[j]
