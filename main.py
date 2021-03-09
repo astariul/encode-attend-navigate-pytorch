@@ -70,7 +70,7 @@ def main():
 
             # Display
             print('Reward (before 2 opt)', reward[j])
-            opt_tour, opt_length = dataset.loop2opt(input_batch[0][best_tour])
+            opt_tour, opt_length = dataset.loop2opt(input_batch.cpu()[0][best_tour])
             print('Reward (with 2 opt)', opt_length)
             dataset.visualize_2D_trip(opt_tour)
 
