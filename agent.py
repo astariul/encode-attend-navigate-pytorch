@@ -28,19 +28,25 @@ class Agent(nn.Module):
         super().__init__()
 
         # Actor
-        self.embedding = Embedding(in_dim=space_dim, out_dim=embed_hidden)
-        self.encoder = Encoder(num_layers=enc_stacks, n_hidden=embed_hidden, ff_hidden=ff_hidden, num_heads=enc_heads, p_dropout=p_dropout)
+        self.actor_embedding = Embedding(in_dim=space_dim, out_dim=embed_hidden)
+        self.actor_encoder = Encoder(num_layers=enc_stacks, n_hidden=embed_hidden, ff_hidden=ff_hidden, num_heads=enc_heads, p_dropout=p_dropout)
         self.decoder = Decoder(n_hidden=embed_hidden, att_dim=att_hidden, query_dim=query_hidden, n_history=n_history)
 
         # Critic
+        self.critic_embedding = Embedding(in_dim=space_dim, out_dim=embed_hidden)
+        self.critic_encoder = Encoder(num_layers=enc_stacks, n_hidden=embed_hidden, ff_hidden=ff_hidden, num_heads=enc_heads, p_dropout=p_dropout)
         self.critic = Critic(n_hidden=embed_hidden, att_hidden=att_hidden, crit_hidden=crit_hidden)
 
     def forward(self, inputs, c=10, temp=1):
-        embed_inp = self.embedding(inputs)
-        encoder_hidden = self.encoder(embed_inp)
+        # Actor
+        embed_inp = self.actor_embedding(inputs)
+        encoder_hidden = self.actor_encoder(embed_inp)
 
         tour, log_probs, entropies = self.decoder(encoder_hidden)
 
+        # Critic
+        embed_inp = self.critic_embedding(inputs)
+        encoder_hidden = self.critic_encoder(embed_inp)
         critique = self.critic(encoder_hidden)
 
         return tour, critique, log_probs, entropies
