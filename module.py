@@ -22,10 +22,10 @@ class Embedding(nn.Module):
         super().__init__()
         self.dense = nn.Linear(in_dim, out_dim, bias=False)
         self.batch_norm = (
-            nn.BatchNorm1d(out_dim, eps=0.001, momentum=0.01)
+            nn.BatchNorm1d(out_dim)
             if batch_norm
             else nn.Identity()
-        )   # (Use TF default parameter, for consistency with original code)
+        )
 
     def forward(self, x):
         # x : [bs, seq, in_dim]
@@ -60,8 +60,7 @@ class MultiHeadAttention(nn.Module):
         self.v = nn.Linear(n_hidden, n_hidden)
 
         self.dropout = nn.Dropout(p_dropout)
-        self.batch_norm = nn.BatchNorm1d(n_hidden, eps=0.001, momentum=0.01)
-        # (Use TF default parameter, for consistency with original code)
+        self.batch_norm = nn.BatchNorm1d(n_hidden)
 
         self.num_heads = num_heads
 
@@ -118,8 +117,7 @@ class FeedForward(nn.Module):
 
         self.layers = nn.ModuleList([nn.Linear(in_size, out_size) for in_size, out_size in zip(layers_size[:-1], layers_size[1:])])
 
-        self.batch_norm = nn.BatchNorm1d(layers_size[-1], eps=0.001, momentum=0.01)
-        # (Use TF default parameter, for consistency with original code)
+        self.batch_norm = nn.BatchNorm1d(layers_size[-1])
 
     def forward(self, inputs):
         # inputs : [bs, seq, n_hidden]
