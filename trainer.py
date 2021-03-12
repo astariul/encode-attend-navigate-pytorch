@@ -1,5 +1,6 @@
 import wandb
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 
@@ -69,6 +70,9 @@ class Trainer():
 
         # Backward pass
         (loss1 + loss2).backward()
+
+        # Clip gradients
+        nn.utils.clip_grad_norm_(self.agent.parameters(), self.conf.grad_clip)
 
         # Optimize
         self.optim.step()
