@@ -65,9 +65,9 @@ On Colab, with a `Tesla T4` GPU, it tooks 1h 4m for the training to complete.
 
 Here is the training curves :
 
-<img src="https://user-images.githubusercontent.com/43774355/111016726-d4c5f700-83f2-11eb-9c28-d91acda7eacc.png" width="300"> <img src="https://user-images.githubusercontent.com/43774355/111016728-d5f72400-83f2-11eb-880b-9258bacf33d2.png" width="300">
+<img src="https://user-images.githubusercontent.com/43774355/111016726-d4c5f700-83f2-11eb-9c28-d91acda7eacc.png" width="500"> <img src="https://user-images.githubusercontent.com/43774355/111016728-d5f72400-83f2-11eb-880b-9258bacf33d2.png" width="500">
 
-<img src="https://user-images.githubusercontent.com/43774355/111016730-d68fba80-83f2-11eb-811c-ec861d168a18.png" width="300"> <img src="https://user-images.githubusercontent.com/43774355/111016731-d7c0e780-83f2-11eb-89e5-27077e03edc4.png" width="300">
+<img src="https://user-images.githubusercontent.com/43774355/111016730-d68fba80-83f2-11eb-811c-ec861d168a18.png" width="500"> <img src="https://user-images.githubusercontent.com/43774355/111016731-d7c0e780-83f2-11eb-89e5-27077e03edc4.png" width="500">
 
 ## Implementation
 
