@@ -1,16 +1,16 @@
 <h1 align="center">encode-attend-navigate-pytorch</h1>
 <p align="center">
-Pytorch implementation of [encode-attend-navigate](https://github.com/MichelDeudon/encode-attend-navigate), a Deep Reinforcement Learning based TSP solver.
+Pytorch implementation of <a href="https://github.com/MichelDeudon/encode-attend-navigate">encode-attend-navigate</a>, a Deep Reinforcement Learning based TSP solver.
 </p>
 
-**⚠️ I couldn't reach the same results so far. The TF implementation reach score ~0.1 as good as the 2-opt solution. But with this implementation, the difference between only-RL and RL + 2opt is almost 1 point of difference. I'm currently doing hyper-parameters search, but any help is welcomed :)**
+**⚠️ I couldn't reach the same results as original implementation so far. Help welcomed :)**
 
 ## Get started
 
 ### Run on Colab
 
 You can leverage the free GPU on Colab to train this model. Just run this notebook :
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/googlecolab/colabtools/blob/master/notebooks/colab-github-demo.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Tggr-QIQSyt7jnjZRuBp5wBt6eDoC1-c?usp=sharing)
 
 ### Run locally
 
