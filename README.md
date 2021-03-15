@@ -3,8 +3,6 @@
 Pytorch implementation of <a href="https://github.com/MichelDeudon/encode-attend-navigate">encode-attend-navigate</a>, a Deep Reinforcement Learning based TSP solver.
 </p>
 
-**⚠️ I couldn't reach the same results as original implementation so far. Help welcomed :)**
-
 ## Get started
 
 ### Run on Colab
@@ -58,16 +56,26 @@ python main.py lr=0.002 max_len=100 batch_size=64
 I ran the code with the following command line :
 
 ```console
-python main.py att_hidden=128 crit_hidden=512 enc_stacks=1 ff_hidden=256 lr=0.0002 lr_decay_rate=0.94 lr_decay_steps=5000 p_dropout=0.1 query_hidden=128 steps=25000
+python main.py enc_stacks=1 lr=0.0002 p_dropout=0.1
 ```
 
-On Colab, with a `Tesla T4` GPU, it tooks 1h 4m for the training to complete.
+On Colab, with a `Tesla T4` GPU, it tooks 1h 43m for the training to complete.
 
 Here is the training curves :
 
-<img src="https://user-images.githubusercontent.com/43774355/111016726-d4c5f700-83f2-11eb-9c28-d91acda7eacc.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111016728-d5f72400-83f2-11eb-880b-9258bacf33d2.png" width="400">
+<img src="https://user-images.githubusercontent.com/43774355/111126924-9416db00-85b6-11eb-932e-1af504d91d5a.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111126920-937e4480-85b6-11eb-818e-4cd3dd93e94e.png" width="400">
 
-<img src="https://user-images.githubusercontent.com/43774355/111016730-d68fba80-83f2-11eb-811c-ec861d168a18.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111016731-d7c0e780-83f2-11eb-89e5-27077e03edc4.png" width="400">
+<img src="https://user-images.githubusercontent.com/43774355/111126917-92e5ae00-85b6-11eb-8e91-116503e345ac.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111126909-911bea80-85b6-11eb-8337-0c3e87bfdd21.png" width="400">
+
+---
+
+After training, here is a few example of path generated :
+
+<img src="https://user-images.githubusercontent.com/43774355/111127122-cc1e1e00-85b6-11eb-86f1-0aa93f1b9e13.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111127120-cb858780-85b6-11eb-8ac9-597325f886d5.png" width="400">
+
+<img src="https://user-images.githubusercontent.com/43774355/111127116-caecf100-85b6-11eb-92a3-85ca4f178333.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111127110-ca545a80-85b6-11eb-8e45-c0ccd00c455d.png" width="400">
+
+🔎 _As you can see, the difference of score between "RL only" and "RL + 2-opt" is more important than the original repository. I'm still trying to find the issue._
 
 ## Implementation
 
