@@ -33,112 +33,6 @@ class Embedding(nn.Module):
         return self.batch_norm(emb_x.transpose(1, 2)).transpose(1, 2)
 
 
-class MultiHeadAttention(nn.Module):
-    def __init__(self, n_hidden=512, num_heads=16, p_dropout=0.1):
-        """ Module applying a single block of multi-head attention.
-
-        Args:
-            n_hidden (int, optional): Hidden size. Should be a multiple of
-                `num_heads`. Defaults to 126.
-            num_heads (int, optional): Number of heads. Defaults to 16.
-            p_dropout (float, optional): Dropout rate. Defaults to 0.1.
-
-        Raises:
-            ValueError: Error raised if `n_hidden` is not a multiple of
-                `num_heads`.
-        """
-        super().__init__()
-        if n_hidden % num_heads != 0:
-            raise ValueError(
-                "`n_hidden` ({}) should be a multiple of `num_heads` ({})".format(
-                    n_hidden, num_heads
-                )
-            )
-
-        self.q = nn.Linear(n_hidden, n_hidden)
-        self.k = nn.Linear(n_hidden, n_hidden)
-        self.v = nn.Linear(n_hidden, n_hidden)
-
-        self.dropout = nn.Dropout(p_dropout)
-        self.batch_norm = nn.BatchNorm1d(n_hidden, eps=0.001, momentum=0.01)
-        # (Use TF default parameter, for consistency with original code)
-
-        self.num_heads = num_heads
-
-    def forward(self, inputs):
-        # inputs : [bs, seq, n_hidden]
-        bs, _, n_hidden = inputs.size()
-
-        # Linear projections
-        q = F.relu(self.q(inputs))
-        k = F.relu(self.k(inputs))
-        v = F.relu(self.v(inputs))
-
-        # Split and concat
-        q_ = torch.cat(torch.split(q, n_hidden // self.num_heads, dim=2))
-        k_ = torch.cat(torch.split(k, n_hidden // self.num_heads, dim=2))
-        v_ = torch.cat(torch.split(v, n_hidden // self.num_heads, dim=2))
-
-        # Multiplication
-        outputs = torch.matmul(q_, torch.transpose(k_, 2, 1))
-
-        # Scale
-        outputs = outputs / (k_.size(-1) ** 0.5)
-
-        # Activation
-        outputs = F.softmax(outputs, dim=-1)
-
-        # Dropout
-        outputs = self.dropout(outputs)
-
-        # Weighted sum
-        outputs = torch.matmul(outputs, v_)
-
-        # Restore shape
-        outputs = torch.cat(torch.split(outputs, bs), dim=2)
-
-        # Residual connection
-        outputs += inputs
-
-        # Normalize
-        outputs = self.batch_norm(outputs.transpose(1, 2)).transpose(1, 2)
-
-        return outputs
-
-
-class FeedForward(nn.Module):
-    def __init__(self, layers_size=[512, 2048, 512]):
-        """ Feed Forward network.
-
-        Args:
-            layers_size (list, optional): List describing the internal sizes of
-                the FF network. Defaults to [512, 2048, 512].
-        """
-        super().__init__()
-
-        self.layers = nn.ModuleList([nn.Linear(in_size, out_size) for in_size, out_size in zip(layers_size[:-1], layers_size[1:])])
-
-        self.batch_norm = nn.BatchNorm1d(layers_size[-1], eps=0.001, momentum=0.01)
-        # (Use TF default parameter, for consistency with original code)
-
-    def forward(self, inputs):
-        # inputs : [bs, seq, n_hidden]
-        outputs = inputs
-        for i, layer in enumerate(self.layers):
-            outputs = layer(outputs)
-
-            if i < len(self.layers) - 1:
-                outputs = F.relu(outputs)
-
-        # Residual connection
-        outputs += inputs
-
-        # Normalize
-        outputs = self.batch_norm(outputs.transpose(1, 2)).transpose(1, 2)
-
-        return outputs
-
-
 class Encoder(nn.Module):
     def __init__(
         self, num_layers=3, n_hidden=512, ff_hidden=2048, num_heads=16, p_dropout=0.1
@@ -153,13 +47,11 @@ class Encoder(nn.Module):
             p_dropout (float, optional): Dropout rate. Defaults to 0.1.
         """
         super().__init__()
-        self.multihead_attention = nn.ModuleList([MultiHeadAttention(n_hidden, num_heads, p_dropout) for _ in range(num_layers)])
-        self.ff = nn.ModuleList([FeedForward(layers_size=[n_hidden, ff_hidden, n_hidden]) for _ in range(num_layers)])
+        encoder_layer = nn.TransformerEncoderLayer(d_model=n_hidden, nhead=num_heads, dim_feedforward=ff_hidden, dropout=p_dropout)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
     def forward(self, input_seq):
-        for att, ff in zip(self.multihead_attention, self.ff):
-            input_seq = ff(att(input_seq))
-        return input_seq
+        return self.transformer(input_seq)
 
 
 class Pointer(nn.Module):
