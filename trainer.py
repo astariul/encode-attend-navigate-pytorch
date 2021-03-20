@@ -19,8 +19,10 @@ def reward_fn(coords, tour):
     """
     dim = coords.size(-1)
 
-    ordered_coords = torch.gather(coords, 1, tour.long().unsqueeze(-1).repeat(1, 1, dim))
-    ordered_coords = ordered_coords.transpose(0, 2)   # [dim, seq_len, batch_size]
+    ordered_coords = torch.gather(
+        coords, 1, tour.long().unsqueeze(-1).repeat(1, 1, dim)
+    )
+    ordered_coords = ordered_coords.transpose(0, 2)  # [dim, seq_len, batch_size]
 
     # For each dimension (x, y), compute the squared difference between each city
     delta2 = [torch.square(d[1:] - d[:-1]).transpose(0, 1) for d in ordered_coords]
@@ -28,11 +30,11 @@ def reward_fn(coords, tour):
     # Euclidian distance between each city
     inter_city_distances = torch.sqrt(sum(delta2))
     distance = inter_city_distances.sum(dim=-1)
-    
+
     return distance.float()
 
 
-class Trainer():
+class Trainer:
     def __init__(self, conf, agent, dataset):
         """Trainer class, taking care of training the agent.
 
@@ -51,9 +53,12 @@ class Trainer():
         self.agent = self.agent.to(self.device)
 
         self.optim = torch.optim.Adam(params=self.agent.parameters(), lr=self.conf.lr)
-        gamma = 1 - self.conf.lr_decay_rate / self.conf.lr_decay_steps      # To have same behavior as Tensorflow implementation
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=self.optim, gamma=gamma)
-
+        gamma = (
+            1 - self.conf.lr_decay_rate / self.conf.lr_decay_steps
+        )  # To have same behavior as Tensorflow implementation
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(
+            optimizer=self.optim, gamma=gamma
+        )
 
     def train_step(self, data):
         self.optim.zero_grad()
@@ -86,7 +91,9 @@ class Trainer():
         self.agent.train()
         running_reward, running_losses = 0, [0, 0]
         for step in range(self.conf.steps):
-            input_batch = self.dataset.train_batch(self.conf.batch_size, self.conf.max_len, self.conf.dimension)
+            input_batch = self.dataset.train_batch(
+                self.conf.batch_size, self.conf.max_len, self.conf.dimension
+            )
             input_batch = torch.Tensor(input_batch).to(self.device)
 
             reward, losses = self.train_step(input_batch)
@@ -97,16 +104,15 @@ class Trainer():
 
             if step % self.conf.log_interval == 0 and step != 0:
                 # Log stuff
-                wandb.log({
-                    'reward': running_reward / self.conf.log_interval,
-                    'actor_loss': running_losses[0] / self.conf.log_interval,
-                    'critic_loss': running_losses[1] / self.conf.log_interval,
-                    'learning_rate': self.scheduler.get_last_lr()[0],
-                    'step': step
-                })
+                wandb.log(
+                    {
+                        "reward": running_reward / self.conf.log_interval,
+                        "actor_loss": running_losses[0] / self.conf.log_interval,
+                        "critic_loss": running_losses[1] / self.conf.log_interval,
+                        "learning_rate": self.scheduler.get_last_lr()[0],
+                        "step": step,
+                    }
+                )
 
                 # Reset running reward/loss
                 running_reward, running_losses = 0, [0, 0]
-
-
-            

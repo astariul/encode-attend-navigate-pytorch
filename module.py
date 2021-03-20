@@ -25,11 +25,11 @@ class Embedding(nn.Module):
             nn.BatchNorm1d(out_dim, eps=0.001, momentum=0.01)
             if batch_norm
             else nn.Identity()
-        )   # (Use TF default parameter, for consistency with original code)
+        )  # (Use TF default parameter, for consistency with original code)
 
     def forward(self, x):
         # x : [bs, seq, in_dim]
-        emb_x = self.dense(x)   # [bs, out_dim, seq]
+        emb_x = self.dense(x)  # [bs, out_dim, seq]
         return self.batch_norm(emb_x.transpose(1, 2)).transpose(1, 2)
 
 
@@ -47,7 +47,12 @@ class Encoder(nn.Module):
             p_dropout (float, optional): Dropout rate. Defaults to 0.1.
         """
         super().__init__()
-        encoder_layer = nn.TransformerEncoderLayer(d_model=n_hidden, nhead=num_heads, dim_feedforward=ff_hidden, dropout=p_dropout)
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=n_hidden,
+            nhead=num_heads,
+            dim_feedforward=ff_hidden,
+            dropout=p_dropout,
+        )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
     def forward(self, input_seq):
@@ -70,7 +75,7 @@ class Pointer(nn.Module):
     def reset_parameters(self):
         fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.w_q.weight)
         bound = 1 / math.sqrt(fan_in)
-        nn.init.uniform_(self.v, -bound, bound)    # Similar to a bias of Linear layer
+        nn.init.uniform_(self.v, -bound, bound)  # Similar to a bias of Linear layer
 
     def forward(self, encoded_ref, query, mask, c=10, temp=1):
         encoded_query = self.w_q(query).unsqueeze(1)
@@ -98,7 +103,7 @@ class FullGlimpse(nn.Module):
     def reset_parameters(self):
         fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.dense.weight)
         bound = 1 / math.sqrt(fan_in)
-        nn.init.uniform_(self.v, -bound, bound)    # Similar to a bias of Linear layer
+        nn.init.uniform_(self.v, -bound, bound)  # Similar to a bias of Linear layer
 
     def forward(self, ref):
         # Attention
@@ -125,20 +130,25 @@ class Decoder(nn.Module):
         super().__init__()
         self.dense = nn.Linear(n_hidden, att_dim, bias=False)
         self.n_history = n_history
-        self.queriers = nn.ModuleList([
-            nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)
-        ])
+        self.queriers = nn.ModuleList(
+            [nn.Linear(n_hidden, query_dim, bias=False) for _ in range(n_history)]
+        )
         self.pointer = Pointer(query_dim, att_dim)
 
     def forward(self, inputs, c=10, temp=1):
         batch_size, seq_len, hidden = inputs.size()
 
         idx_list, log_probs, entropies = [], [], []  # Tours index, log_probs, entropies
-        mask = torch.zeros([batch_size, seq_len], device=inputs.device)  # Mask for actions
+        mask = torch.zeros(
+            [batch_size, seq_len], device=inputs.device
+        )  # Mask for actions
 
         encoded_input = self.dense(inputs)
 
-        prev_actions = [torch.zeros([batch_size, hidden], device=inputs.device) for _ in range(self.n_history)]
+        prev_actions = [
+            torch.zeros([batch_size, hidden], device=inputs.device)
+            for _ in range(self.n_history)
+        ]
 
         for _ in range(seq_len):
             query = F.relu(
@@ -157,7 +167,9 @@ class Decoder(nn.Module):
             idx_list.append(idx)  # Tour index
             log_probs.append(probs.log_prob(idx))
             entropies.append(probs.entropy())
-            mask = mask + torch.zeros([batch_size, seq_len], device=inputs.device).scatter_(1, idx.unsqueeze(1), 1)
+            mask = mask + torch.zeros(
+                [batch_size, seq_len], device=inputs.device
+            ).scatter_(1, idx.unsqueeze(1), 1)
 
             action_rep = inputs[torch.arange(batch_size), idx]
             prev_actions.pop(0)

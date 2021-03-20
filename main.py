@@ -18,7 +18,7 @@ def load_conf():
     Returns:
         OmegaConf.DictConfig: OmegaConf object representing the configuration.
     """
-    default_conf = omg.create({"config" : "config.yaml"})
+    default_conf = omg.create({"config": "config.yaml"})
 
     sys.argv = [a.strip("-") for a in sys.argv]
     cli_conf = omg.from_cli()
@@ -34,7 +34,17 @@ def main():
     conf = load_conf()
     wandb.init(project=conf.proj_name, config=dict(conf))
 
-    agent = Agent(embed_hidden=conf.embed_hidden, enc_stacks=conf.enc_stacks, ff_hidden=conf.ff_hidden, enc_heads=conf.enc_heads, query_hidden=conf.query_hidden, att_hidden=conf.att_hidden, crit_hidden=conf.crit_hidden, n_history=conf.n_history, p_dropout=conf.p_dropout)
+    agent = Agent(
+        embed_hidden=conf.embed_hidden,
+        enc_stacks=conf.enc_stacks,
+        ff_hidden=conf.ff_hidden,
+        enc_heads=conf.enc_heads,
+        query_hidden=conf.query_hidden,
+        att_hidden=conf.att_hidden,
+        crit_hidden=conf.crit_hidden,
+        n_history=conf.n_history,
+        p_dropout=conf.p_dropout,
+    )
     wandb.watch(agent)
 
     dataset = DataGenerator()
@@ -54,7 +64,9 @@ def main():
 
         running_reward = 0
         for _ in range(conf.test_steps):
-            input_batch = dataset.test_batch(conf.batch_size, conf.max_len, conf.dimension, shuffle=False)
+            input_batch = dataset.test_batch(
+                conf.batch_size, conf.max_len, conf.dimension, shuffle=False
+            )
             input_batch = torch.Tensor(input_batch).to(device)
 
             tour, *_ = agent(input_batch)
@@ -69,9 +81,9 @@ def main():
             running_reward += reward[j]
 
             # Display
-            print('Reward (before 2 opt)', reward[j])
+            print("Reward (before 2 opt)", reward[j])
             opt_tour, opt_length = dataset.loop2opt(input_batch.cpu()[0][best_tour])
-            print('Reward (with 2 opt)', opt_length)
+            print("Reward (with 2 opt)", opt_length)
             dataset.visualize_2D_trip(opt_tour)
 
         wandb.run.summary["test_reward"] = running_reward / conf.test_steps
