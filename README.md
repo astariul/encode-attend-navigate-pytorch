@@ -59,23 +59,21 @@ I ran the code with the following command line :
 python main.py enc_stacks=1 lr=0.0002 p_dropout=0.1
 ```
 
-On Colab, with a `Tesla T4` GPU, it tooks 1h 43m for the training to complete.
+On Colab, with a `Tesla T4` GPU, it tooks 1h 46m for the training to complete.
 
 Here is the training curves :
 
-<img src="https://user-images.githubusercontent.com/43774355/111126924-9416db00-85b6-11eb-932e-1af504d91d5a.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111126920-937e4480-85b6-11eb-818e-4cd3dd93e94e.png" width="400">
+<img src="https://user-images.githubusercontent.com/43774355/116061592-03a3de00-a6be-11eb-8d7a-71dce9586c3e.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/116061604-07376500-a6be-11eb-8368-9d9d87e277cb.png" width="400">
 
-<img src="https://user-images.githubusercontent.com/43774355/111126917-92e5ae00-85b6-11eb-8e91-116503e345ac.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111126909-911bea80-85b6-11eb-8337-0c3e87bfdd21.png" width="400">
+<img src="https://user-images.githubusercontent.com/43774355/116061618-0b638280-a6be-11eb-86a6-40e61cb84b0c.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/116061630-0e5e7300-a6be-11eb-8313-672da3965174.png" width="400">
 
 ---
 
 After training, here is a few example of path generated :
 
-<img src="https://user-images.githubusercontent.com/43774355/111127122-cc1e1e00-85b6-11eb-86f1-0aa93f1b9e13.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111127120-cb858780-85b6-11eb-8ac9-597325f886d5.png" width="400">
+<img src="https://user-images.githubusercontent.com/43774355/116062078-8a58bb00-a6be-11eb-86ff-3de0e6735950.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/116062074-89c02480-a6be-11eb-8668-e8141e71e5aa.png" width="400">
 
-<img src="https://user-images.githubusercontent.com/43774355/111127116-caecf100-85b6-11eb-92a3-85ca4f178333.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/111127110-ca545a80-85b6-11eb-8e45-c0ccd00c455d.png" width="400">
-
-🔎 _As you can see, the difference of score between "RL only" and "RL + 2-opt" is more important than the original repository. I'm still trying to find the issue._
+<img src="https://user-images.githubusercontent.com/43774355/116062069-888ef780-a6be-11eb-96f8-183cd65c8af5.png" width="400"> <img src="https://user-images.githubusercontent.com/43774355/116062082-8a58bb00-a6be-11eb-857d-df51d7aa7763.png" width="400">
 
 ## Implementation
 
