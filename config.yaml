@@ -27,3 +27,4 @@ device: "cuda:0"
 lr: 0.001
 lr_decay_rate: 0.96
 lr_decay_steps: 5000
+grad_clip: 1

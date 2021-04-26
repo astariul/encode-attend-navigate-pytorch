@@ -1,5 +1,6 @@
 import wandb
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 
@@ -64,12 +65,15 @@ class Trainer():
         reward = reward_fn(data, tour)
 
         # Compute losses for both actor (reinforce) and critic
-        loss1 = ((reward - critique) * log_probs).mean()
+        loss1 = ((reward - critique).detach() * log_probs).mean()
         loss2 = F.mse_loss(reward, critique)
 
         # Backward pass
         loss1.backward()
         loss2.backward()
+
+        # Clip gradients
+        nn.utils.clip_grad_norm_(self.agent.parameters(), self.conf.grad_clip)
 
         # Optimize
         self.optim.step()
