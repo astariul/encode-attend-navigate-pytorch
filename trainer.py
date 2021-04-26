@@ -65,7 +65,7 @@ class Trainer():
         reward = reward_fn(data, tour)
 
         # Compute losses for both actor (reinforce) and critic
-        loss1 = ((reward - critique) * log_probs).mean()
+        loss1 = ((reward - critique).detach() * log_probs).mean()
         loss2 = F.mse_loss(reward, critique)
 
         # Backward pass
