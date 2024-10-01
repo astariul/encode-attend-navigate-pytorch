@@ -1,6 +1,6 @@
 <h1 align="center">encode-attend-navigate-pytorch</h1>
 <p align="center">
-Pytorch implementation of <a href="https://github.com/MichelDeudon/encode-attend-navigate">encode-attend-navigate</a>, a Deep Reinforcement Learning based TSP solver.
+Pytorch implementation of <a href="https://framagit.org/MichelDeudon/encode-attend-navigate">encode-attend-navigate</a>, a Deep Reinforcement Learning based TSP solver.
 </p>
 
 ## Get started
@@ -77,7 +77,7 @@ After training, here is a few example of path generated :
 
 ## Implementation
 
-This code is a direct translation of the [official TF 1.x implementation](https://github.com/MichelDeudon/encode-attend-navigate), by @MichelDeudon.
+This code is a direct translation of the [official TF 1.x implementation](https://framagit.org/MichelDeudon/encode-attend-navigate), by @MichelDeudon.
 
 Please refer to their README for additional details.
 
